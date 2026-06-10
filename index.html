@@ -17,8 +17,10 @@
   --red:#ff2244;--amber:#ff9900;--green:#00ff88;
   --bg:#020c16;--panel:#050f1c;--border:rgba(0,200,255,0.18);
 }
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:#e8f4ff;font-family:'Rajdhani',sans-serif;}
-body{display:flex;}
+html,body{width:100%;height:100%;background:var(--bg);color:#e8f4ff;font-family:'Rajdhani',sans-serif;}
+
+/* MODO COMPUTADORA POR DEFECTO */
+body{display:flex;overflow:hidden;}
 
 /* ---- SIDEBAR ---- */
 .sidebar{
@@ -211,7 +213,7 @@ select option{background:#030b18;}
 .br-tr{top:18px;right:18px;border-top:2px solid rgba(0,200,255,0.4);border-right:2px solid rgba(0,200,255,0.4);}
 .br-bl{bottom:18px;left:18px;border-bottom:2px solid rgba(0,200,255,0.4);border-left:2px solid rgba(0,200,255,0.4);}
 .br-br{bottom:18px;right:18px;border-bottom:2px solid rgba(0,200,255,0.4);border-right:2px solid rgba(0,200,255,0.4);}
-.canvas-label.cl-top{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-family:'Orbitron';font-size:11px;letter-spacing:2px;color:rgba(0,229,255,0.6);z-index:3;}
+.canvas-label.cl-top{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-family:'Orbitron';font-size:11px;letter-spacing:2px;color:rgba(0,229,255,0.6);z-index:3;text-align:center;}
 .canvas-label.cl-bot{position:absolute;bottom:22px;right:22px;text-align:right;font-family:'Rajdhani';font-size:12px;letter-spacing:1px;color:rgba(140,200,240,0.4);z-index:3;}
 
 /* ===================================================
@@ -234,7 +236,7 @@ select option{background:#030b18;}
   box-shadow: 0 0 25px rgba(0,229,255,0.15);
   padding: 30px;
   border-radius: 8px;
-  width: 100%;
+  width: 90%;
   max-width: 400px;
   text-align: center;
 }
@@ -323,14 +325,14 @@ select option{background:#030b18;}
   display: none;
   justify-content: center;
   align-items: center;
-  padding: 30px;
+  padding: 15px;
 }
 .excel-container {
   background: var(--panel);
   border: 1px solid var(--border);
   width: 100%;
   max-width: 850px;
-  max-height: 85%;
+  max-height: 90%;
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -344,13 +346,15 @@ select option{background:#030b18;}
   margin-bottom: 16px;
   border-bottom: 1px solid var(--border);
   padding-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .excel-header h3 { font-family: 'Orbitron', sans-serif; color: var(--c1); font-size: 15px; letter-spacing: 1px; }
 .close-excel { color: var(--red); cursor: pointer; font-weight: bold; font-size: 18px; transition: color 0.2s; }
 .close-excel:hover { color: #fff; }
 .table-wrapper { overflow: auto; flex: 1; }
 table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #e8f4ff; }
-th, td { padding: 10px 12px; border: 1px solid var(--border); }
+th, td { padding: 10px 12px; border: 1px solid var(--border); white-space: nowrap; }
 th { background: rgba(0,229,255,0.08); color: var(--c1); font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px; }
 tr:nth-child(even) { background: rgba(255,255,255,0.01); }
 
@@ -374,6 +378,60 @@ tr:nth-child(even) { background: rgba(255,255,255,0.01); }
 #btn-reset-flow:hover {
   background: rgba(0, 255, 136, 0.08);
   box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);
+}
+
+/* ===================================================
+   ADAPTACIÓN TOTAL PARA CELULARES (RESPONSIVE)
+   =================================================== */
+@media (max-width: 768px) {
+  body {
+    display: block; /* Rompe el flex horizontal */
+    overflow-y: auto; /* Permite deslizar hacia abajo */
+    height: auto;
+  }
+  
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 20px 15px;
+  }
+
+  .canvas-wrap {
+    width: 100%;
+    height: 550px; /* Tamaño fijo perfecto para ver al muñeco en el fono */
+    position: relative;
+  }
+
+  #btn-open-excel {
+    position: fixed; /* Lo fija en pantalla para que no se pierda al hacer scroll */
+    bottom: 15px;
+    right: 15px;
+  }
+
+  .layer-hud {
+    top: 15px;
+  }
+
+  .canvas-label.cl-top {
+    top: 60px;
+    font-size: 9px;
+    padding: 0 10px;
+  }
+  
+  .canvas-label.cl-bot {
+    bottom: 15px;
+    left: 15px;
+    text-align: left;
+    font-size: 11px;
+  }
+
+  .excel-container {
+    max-height: 95%;
+    padding: 12px;
+  }
 }
 </style>
 </head>
@@ -404,14 +462,14 @@ tr:nth-child(even) { background: rgba(255,255,255,0.01); }
   <div class="excel-container">
     <div class="excel-header">
       <h3>📁 Base_Pacientes.xlsx (Matriz Local)</h3>
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <button onclick="limpiarTodaLaBaseDeDatos()" style="background: rgba(255,34,68,0.15); color: var(--red); border: 1px solid rgba(255,34,68,0.4); padding: 7px 12px; font-family: 'Rajdhani'; font-weight: bold; font-size: 13px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <button onclick="limpiarTodaLaBaseDeDatos()" style="background: rgba(255,34,68,0.15); color: var(--red); border: 1px solid rgba(255,34,68,0.4); padding: 6px 10px; font-family: 'Rajdhani'; font-weight: bold; font-size: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
           🗑️ Limpiar Todo
         </button>
-        <button onclick="descargarExcelXLSX()" style="background: #217346; color: white; border: none; padding: 7px 14px; font-family: 'Rajdhani'; font-weight: bold; font-size: 13px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
-          💚 Descargar .xlsx Real
+        <button onclick="descargarExcelXLSX()" style="background: #217346; color: white; border: none; padding: 6px 12px; font-family: 'Rajdhani'; font-weight: bold; font-size: 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.2s;">
+          💚 Descargar .xlsx
         </button>
-        <span class="close-excel" onclick="cerrarModalExcel()">✕</span>
+        <span class="close-excel" onclick="cerrarModalExcel()" style="margin-left: 5px;">✕</span>
       </div>
     </div>
     <div class="table-wrapper">
@@ -789,7 +847,7 @@ loader.load('FinalBaseMesh.obj', function (obj) {
 
   generarCerebroPuntitos();
   generarNerviosCurvosOrganicos();
-  crearZonasDeColisionInvisibles(); // <--- ERROR CORREGIDO (Quitado el espacio que rompa el script)
+  crearZonasDeColisionInvisibles();
 
   document.getElementById('model-status').textContent = 'SISTEMA EN LÍNEA';
   document.getElementById('model-status').style.color = 'var(--green)';
@@ -910,9 +968,24 @@ window.addEventListener('mousemove', e => {
   if (!drag) return; tRotY += (e.clientX - px) * 0.008; px = e.clientX; tRotX += (e.clientY - py) * 0.004; py = e.clientY; tRotX = Math.max(-0.5, Math.min(0.5, tRotX));
 });
 
+// ADAPTACIONES PARA PANTALLAS TÁCTILES (CELULARES)
+canvas.addEventListener('touchstart', e => {
+  if(e.touches.length === 1) {
+    drag = true; autoRot = false; px = e.touches[0].clientX; py = e.touches[0].clientY;
+  }
+}, {passive: true});
+window.addEventListener('touchend', e => { drag = false; });
+window.addEventListener('touchmove', e => {
+  if (!drag || e.touches.length !== 1) return;
+  tRotY += (e.touches[0].clientX - px) * 0.008; px = e.touches[0].clientX;
+  tRotX += (e.touches[0].clientY - py) * 0.004; py = e.touches[0].clientY;
+  tRotX = Math.max(-0.5, Math.min(0.5, tRotX));
+}, {passive: true});
+
 function procesarClickRaycast(e) {
-  if (!bodyMesh || capaActivaGlobal === 'body') return; raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(objetosInteractivos);
-  if (intersects.length > 0) activarDiagnosticoRegional(intersects[0].object.userData.nombreRegion);
+  if (!bodyMesh || capaActivaGlobal === 'body') return; raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(intersectsObj => objetosInteractivos.includes(intersectsObj) || objetosInteractivos.some(obj => obj === intersectsObj));
+  const finalIntersects = raycaster.intersectObjects(objetosInteractivos);
+  if (finalIntersects.length > 0) activarDiagnosticoRegional(finalIntersects[0].object.userData.nombreRegion);
 }
 
 function ganarOpacidadCuerpo(alfa) { ajustarOpacidadMallaCuerpo(alfa); }
@@ -921,6 +994,7 @@ function activarDiagnosticoRegional(nombreReg) {
   regionSeleccionada = true; autoRot = false; tRotY = 0; tRotX = 0; const centroX = -0.05;
   const panel = document.getElementById('reg-panel'); const title = document.getElementById('reg-title'); const desc = document.getElementById('reg-desc');
   document.getElementById('btnBack').style.display = 'block'; panel.style.display = 'block';
+  
   if (nombreReg === 'cabeza') {
     camTargetPos.set(centroX, 1.15, 1.4); lookTarget.set(centroX, 1.15, 0); title.textContent = '🔍 Análisis: Corteza Cerebral';
     desc.textContent = document.getElementById('sueno').value === 'x' ? 'Alerta: Actividad electroencefalográfica alterada por privación crítica de sueño. Ondas delta disminuidas.' : (document.getElementById('sueno').value === 'm' ? 'Estado: Fatiga leve detectada en el lóbulo frontal. Capacidad cognitiva normal con desgaste.' : 'Estado: Patrón de ondas cerebrales estable. Regeneración celular nocturna completada de forma óptima.');
@@ -930,6 +1004,11 @@ function activarDiagnosticoRegional(nombreReg) {
   } else if (nombreReg === 'piernas') {
     camTargetPos.set(centroX, -0.9, 1.8); lookTarget.set(centroX, -0.9, 0); title.textContent = '🔍 Análisis: Extremidades Inferiores';
     desc.textContent = document.getElementById('apoyo').value === 'x' ? 'Aviso: Tensión muscular refleja acumulada en el tren inferior. Respuesta de huida inhibida por estrés sostenido.' : 'Estado: Nervios ciáticos y femorales estables. Conductividad eléctrica periférica dentro de los rangos normales.';
+  }
+
+  // SI ESTÁ EN CELULAR, HACER SCROLL AUTOMÁTICO HACIA EL MUÑECO PARA QUE VEAN EL ZOOM
+  if(window.innerWidth <= 768) {
+    document.querySelector('.canvas-wrap').scrollIntoView({ behavior: 'smooth' });
   }
 }
 function resetearVistaCamara() { regionSeleccionada = false; autoRot = true; camTargetPos.set(0, 0, 4.0); lookTarget.set(0, 0, 0); document.getElementById('btnBack').style.display = 'none'; document.getElementById('reg-panel').style.display = 'none'; }
@@ -1061,9 +1140,19 @@ function evaluar(){
   
   // Despachar reporte automático al correo del estudiante mediante EmailJS
   enviarCorreoRecomendacion(diagnósticoTexto, recomendacionesTexto);
+
+  // SI ES CELULAR, HACER AUTO-SCROLL AL RESULTADO INMEDIATAMENTE
+  if(window.innerWidth <= 768) {
+    res.scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
-window.addEventListener('resize',()=>{ camera.aspect = W()/H(); camera.updateProjectionMatrix(); renderer.setSize(W(),H()); });
+window.addEventListener('resize',()=>{ 
+  camera.aspect = canvas.clientWidth / canvas.clientHeight; 
+  camera.updateProjectionMatrix(); 
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight); 
+  resizeOscilloscope();
+});
 </script>
 </body>
 </html>
