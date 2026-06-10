@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bio-Monitor Neural v8.5 • Red Neural de Alta Densidad</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght=300;400;500;600;700&family=Orbitron:wght=400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --c1:#00e5ff;--c2:#0099cc;--c3:#006688;
+  --red:#ff2244;--amber:#ff9900;--green:#00ff88;
+  --bg:#020c16;--panel:#050f1c;--border:rgba(0,200,255,0.18);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:#e8f4ff;font-family:'Rajdhani',sans-serif;}
+body{display:flex;}
+
+/* ---- SIDEBAR ---- */
+.sidebar{
+  width:360px;min-width:360px;
+  background:linear-gradient(180deg,#040e1c 0%,#030b18 100%);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:24px 20px 18px;
+  overflow-y:auto;z-index:10;
+  position:relative;
+}
+.sidebar::before{
+  content:'';position:absolute;top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,0.5),transparent);
+}
+
+.brand{margin-bottom:18px;}
+.brand-top{display:flex;align-items:center;gap:10px;margin-bottom:3px;}
+.brand-hex{
+  width:32px;height:32px;
+  background:rgba(0,229,255,0.1);
+  border:1px solid rgba(0,229,255,0.35);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--c1);font-family:'Orbitron',monospace;
+}
+.brand-name{font-family:'Orbitron',monospace;font-size:15px;color:var(--c1);letter-spacing:3px;font-weight:700;}
+.brand-sub{font-size:10px;color:rgba(0,200,255,0.4);letter-spacing:4px;text-transform:uppercase;margin-top:2px;}
+
+.scan-bar{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(0,229,255,0.04);
+  border:1px solid rgba(0,229,255,0.1);
+  border-radius:6px;padding:10px 12px;
+  margin-bottom:22px;
+}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:livePulse 2s infinite;flex-shrink:0;}
+@keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 10px var(--green);}50%{opacity:.5;box-shadow:0 0 20px var(--green),0 0 35px var(--green);}}
+.scan-text{font-size:11px;color:rgba(140,200,220,0.7);letter-spacing:.5px;line-height:1.5;}
+.scan-text span{color:var(--green);font-weight:600;}
+
+.q-group{margin-bottom:16px;}
+.q-label{
+  display:flex;align-items:center;gap:8px;
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  color:rgba(0,200,255,0.55);text-transform:uppercase;
+  margin-bottom:7px;
+}
+.q-num{
+  width:18px;height:18px;border-radius:50%;
+  border:1px solid rgba(0,200,255,0.3);
+  background:rgba(0,200,255,0.08);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--c1);flex-shrink:0;
+  font-family:'Orbitron',monospace;
+}
+.sel-wrap{position:relative;}
+.sel-wrap::after{content:'▾';position:absolute;right:11px;top:50%;transform:translateY(-50%);color:rgba(0,200,255,0.4);pointer-events:none;font-size:11px;}
+select{
+  width:100%;padding:10px 28px 10px 13px;
+  background:rgba(0,5,15,0.9);
+  border:1px solid rgba(0,200,255,0.18);
+  border-radius:5px;color:#c8e8f8;
+  font-family:'Rajdhani',sans-serif;font-size:13px;
+  appearance:none;cursor:pointer;transition:border-color .2s;
+}
+select:focus{outline:none;border-color:rgba(0,200,255,0.55);box-shadow:0 0 0 2px rgba(0,200,255,0.08);}
+select option{background:#030b18;}
+
+.btn-scan{
+  width:100%;padding:13px;margin-top:4px;
+  background:transparent;
+  border:1px solid rgba(0,200,255,0.4);
+  border-radius:5px;color:var(--c1);
+  font-family:'Orbitron',monospace;
+  font-size:11px;letter-spacing:3px;font-weight:700;
+  cursor:pointer;
+  text-transform:uppercase;
+  position:relative;overflow:hidden;
+  transition:all .3s;
+}
+.btn-scan:hover{border-color:rgba(0,200,255,0.8);box-shadow:0 0 20px rgba(0,200,255,0.15);}
+
+.result{
+  margin-top:16px;padding:15px;border-radius:5px;
+  display:none;font-size:13px;line-height:1.65;
+}
+.r-ok{background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.25);color:#5ef0a8;}
+.r-mid{background:rgba(255,153,0,0.06);border:1px solid rgba(255,153,0,0.25);color:#ffc040;}
+.r-bad{background:rgba(255,34,68,0.06);border:1px solid rgba(255,34,68,0.25);color:#ff6688;}
+.result strong{display:block;margin-bottom:5px;font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+
+.region-panel{
+  margin-top:12px;padding:12px;
+  background:rgba(0,229,255,0.03);
+  border:1px dashed rgba(0,200,255,0.2);
+  border-radius:5px;display:none;
+}
+.region-title{font-family:'Orbitron',monospace;font-size:11px;color:var(--c1);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.region-desc{font-size:12px;color:#a0b5c8;line-height:1.4;}
+
+/* ---- OSCILOSCOPIO ---- */
+.osc-block{
+  margin-top:14px;
+  background:rgba(0,5,15,0.6);
+  border:1px solid var(--border);
+  border-radius:5px;padding:10px;
+}
+.osc-header{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:10px;font-weight:700;letter-spacing:1.5px;
+  color:rgba(0,200,255,0.5);text-transform:uppercase;margin-bottom:6px;
+}
+.osc-wave-wrap{
+  width:100%;height:55px;background:#01060d;
+  border:1px solid rgba(0,200,255,0.08);border-radius:3px;
+  position:relative;overflow:hidden;
+}
+#cecg{width:100%;height:100%;display:block;}
+
+.metrics{display:none;gap:8px;margin-top:12px;}
+.metric{
+  flex:1;background:rgba(0,0,0,0.3);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:5px;padding:10px 8px;text-align:center;
+}
+.m-val{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;}
+.m-lbl{font-size:9px;color:#445566;text-transform:uppercase;letter-spacing:1.5px;margin-top:3px;}
+
+.hr{height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,255,0.2),transparent);margin:16px 0;}
+
+.legend{padding:10px 0 0;}
+.legend-title{font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;}
+.legend-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:#607080;}
+.legend-dot{width:7px;height:7px;border-radius:50%;}
+
+.footer{font-size:9px;color:#1a2535;text-align:center;margin-top:auto;padding-top:16px;letter-spacing:1.5px;text-transform:uppercase;}
+
+/* ---- CANVAS & HUD LAYOUT ---- */
+.canvas-wrap{flex:1;position:relative;overflow:hidden;}
+.canvas-wrap::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 70% at 50% 45%,rgba(0,40,80,0.25) 0%,transparent 75%);
+  pointer-events:none;z-index:1;
+}
+#c3d{width:100%;height:100%;display:block;}
+
+/* ---- BOTONERA HUD FILTROS DE CAPAS (TABS) ---- */
+.layer-hud{
+  position:absolute;top:20px;left:50%;transform:translateX(-50%);
+  display:flex;gap:4px;background:rgba(3,13,26,0.85);
+  padding:4px;border:1px solid rgba(0,229,255,0.25);
+  border-radius:6px;z-index:5;
+  box-shadow:0 0 20px rgba(0,5,15,0.6);
+}
+.layer-btn{
+  background:transparent;border:1px solid transparent;
+  color:rgba(0,229,255,0.5);font-family:'Orbitron',monospace;
+  font-size:9px;font-weight:600;letter-spacing:1.5px;
+  padding:8px 14px;border-radius:4px;cursor:pointer;
+  text-transform:uppercase;transition:all 0.2s;
+}
+.layer-btn:hover{color:#fff;background:rgba(0,229,255,0.06);}
+.layer-btn.active{
+  color:#020c16;background:var(--c1);
+  border-color:var(--c1);font-weight:700;
+  box-shadow:0 0 10px rgba(0,229,255,0.4);
+}
+
+.btn-back{
+  position:absolute;bottom:50px;left:50%;transform:translateX(-50%);
+  padding:10px 18px;background:rgba(5,15,28,0.85);
+  border:1px solid var(--c1);border-radius:4px;
+  color:var(--c1);font-family:'Orbitron',monospace;font-size:10px;
+  letter-spacing:2px;cursor:pointer;z-index:5;display:none;
+  box-shadow:0 0 15px rgba(0,229,255,0.2);transition:all 0.2s;
+}
+.btn-back:hover{background:var(--c1);color:#020c16;box-shadow:0 0 25px var(--c1);}
+
+.scanline{
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,0.4),rgba(0,229,255,0.7),rgba(0,229,255,0.4),transparent);
+  animation:scanDown 6s linear infinite;pointer-events:none;z-index:2;
+}
+@keyframes scanDown{0%{top:0;opacity:.8;}100%{top:100%;opacity:0;}}
+
+.bracket{position:absolute;width:22px;height:22px;z-index:2;}
+.br-tl{top:18px;left:18px;border-top:2px solid rgba(0,200,255,0.4);border-left:2px solid rgba(0,200,255,0.4);}
+.br-tr{top:18px;right:18px;border-top:2px solid rgba(0,200,255,0.4);border-right:2px solid rgba(0,200,255,0.4);}
+.br-bl{bottom:18px;left:18px;border-bottom:2px solid rgba(0,200,255,0.4);border-left:2px solid rgba(0,200,255,0.4);}
+.br-br{bottom:18px;right:18px;border-bottom:2px solid rgba(0,200,255,0.4);border-right:2px solid rgba(0,200,255,0.4);}
+.canvas-label.cl-top{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-family:'Orbitron';font-size:11px;letter-spacing:2px;color:rgba(0,229,255,0.6);z-index:3;}
+.canvas-label.cl-bot{position:absolute;bottom:22px;right:22px;text-align:right;font-family:'Rajdhani';font-size:12px;letter-spacing:1px;color:rgba(140,200,240,0.4);z-index:3;}
+
+/* ===================================================
+   INTERFAZ DE REGISTRO INTERNA Y EXCEL MODAL
+   =================================================== */
+#registration-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(2, 12, 22, 0.96);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reg-panel {
+  background: var(--panel);
+  border: 1px solid var(--c1);
+  box-shadow: 0 0 25px rgba(0,229,255,0.15);
+  padding: 30px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+.reg-panel h2 {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--c1);
+  letter-spacing: 2px;
+  margin-bottom: 22px;
+  font-size: 18px;
+}
+.form-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+.form-group label {
+  color: #8fa0b0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 6px;
+}
+.form-group input {
+  width: 100%;
+  background: rgba(0,5,15,0.8);
+  border: 1px solid rgba(0,200,255,0.2);
+  padding: 11px 14px;
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.form-group input:focus {
+  border-color: var(--c1);
+}
+.btn-submit-reg {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--c1);
+  color: var(--c1);
+  font-family: 'Orbitron', sans-serif;
+  padding: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+  margin-top: 10px;
+  transition: all 0.3s;
+}
+.btn-submit-reg:hover {
+  background: var(--c1);
+  color: var(--bg);
+  box-shadow: 0 0 15px var(--c1);
+}
+
+#btn-open-excel {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 8;
+  background: rgba(4,14,28,0.9);
+  border: 1px solid rgba(0,229,255,0.3);
+  color: var(--c1);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  transition: all 0.2s;
+}
+#btn-open-excel:hover {
+  border-color: var(--c1);
+  box-shadow: 0 0 12px rgba(0,229,255,0.2);
+}
+
+#excel-modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(2,12,22,0.92);
+  z-index: 10000;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+.excel-container {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 850px;
+  max-height: 85%;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.7);
+}
+.excel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+.excel-header h3 { font-family: 'Orbitron', sans-serif; color: var(--c1); font-size: 15px; letter-spacing: 1px; }
+.close-excel { color: var(--red); cursor: pointer; font-weight: bold; font-size: 18px; transition: color 0.2s; }
+.close-excel:hover { color: #fff; }
+.table-wrapper { overflow: auto; flex: 1; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; color: #e8f4ff; }
+th, td { padding: 10px 12px; border: 1px solid var(--border); }
+th { background: rgba(0,229,255,0.08); color: var(--c1); font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px; }
+tr:nth-child(even) { background: rgba(255,255,255,0.01); }
+
+/* BOTÓN FLOTANTE PARA REINICIAR Y ESCANEAR A OTRO ALUMNO */
+#btn-reset-flow {
+  display: none;
+  width: 100%;
+  margin-top: 12px;
+  background: transparent;
+  border: 1px dashed var(--green);
+  color: var(--green);
+  font-family: 'Orbitron', sans-serif;
+  padding: 10px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+#btn-reset-flow:hover {
+  background: rgba(0, 255, 136, 0.08);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);
+}
+</style>
+</head>
+<body>
+
+<div id="registration-overlay">
+  <div class="reg-panel">
+    <h2>ACCESO DE SEGURIDAD NEURAL</h2>
+    <div class="form-group">
+      <label>Nombre del Evaluado:</label>
+      <input type="text" id="reg-name" placeholder="Ej. Juan Pérez" required>
+    </div>
+    <div class="form-group">
+      <label>Edad:</label>
+      <input type="number" id="reg-age" placeholder="Ej. 16" required>
+    </div>
+    <div class="form-group">
+      <label>Correo Electrónico:</label>
+      <input type="email" id="reg-email" placeholder="ejemplo@correo.com" required>
+    </div>
+    <button class="btn-submit-reg" onclick="registrarUsuarioTemporal()">Autenticar & Cargar Sistema</button>
+  </div>
+</div>
+
+<button id="btn-open-excel" onclick="abrirModalExcel()">📊 HISTORIAL EXCEL</button>
+
+<div id="excel-modal">
+  <div class="excel-container">
+    <div class="excel-header">
+      <h3>📁 Base_Pacientes.xlsx (Matriz Local)</h3>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button onclick="limpiarTodaLaBaseDeDatos()" style="background: rgba(255,34,68,0.15); color: var(--red); border: 1px solid rgba(255,34,68,0.4); padding: 7px 12px; font-family: 'Rajdhani'; font-weight: bold; font-size: 13px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+          🗑️ Limpiar Todo
+        </button>
+        <button onclick="descargarExcelXLSX()" style="background: #217346; color: white; border: none; padding: 7px 14px; font-family: 'Rajdhani'; font-weight: bold; font-size: 13px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
+          💚 Descargar .xlsx Real
+        </button>
+        <span class="close-excel" onclick="cerrarModalExcel()">✕</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Edad</th>
+            <th>Correo</th>
+            <th>Horas Sueño</th>
+            <th>Reacción Estrés</th>
+            <th>Red Apoyo</th>
+            <th>Diagnóstico</th>
+          </tr>
+        </thead>
+        <tbody id="excel-rows-body">
+          </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar">
+  <div class="brand">
+    <div class="brand-top">
+      <div class="brand-hex">⬡</div>
+      <div class="brand-name">NEURO·SCAN</div>
+    </div>
+    <div class="brand-sub">Sistema Nervioso · Bio-Monitor v8.5</div>
+  </div>
+
+  <div class="scan-bar">
+    <div class="live-dot"></div>
+    <div class="scan-text">Malla OBJ Integrada — <span id="model-status" style="color:var(--amber)">CARGANDO...</span><br>Alineación y Centrado Simétrico de Precisión.</div>
+  </div>
+
+  <div class="q-group">
+    <div class="q-label"><span class="q-num">01</span>Horas de sueño por noche</div>
+    <div class="sel-wrap">
+      <select id="sueno">
+        <option value="b">8 h o más — Régimen óptimo</option>
+        <option value="m">6–7 h — Fatiga moderada</option>
+        <option value="x">Menos de 6 h — Alerta crítica</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="q-group">
+    <div class="q-label"><span class="q-num">02</span>Respuesta ante estrés o tensión</div>
+    <div class="sel-wrap">
+      <select id="reac">
+        <option value="b">Respiro y mantengo la calma</option>
+        <option value="m">Nervios leves pero me controlo</option>
+        <option value="x">Dolor estómago / temblores</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="q-group">
+    <div class="q-label"><span class="q-num">03</span>Red de apoyo ante acoso escolar</div>
+    <div class="sel-wrap">
+      <select id="apoyo">
+        <option value="b">Sí — hablo con adultos de confianza</option>
+        <option value="m">A veces — me cuesta comunicarlo</option>
+        <option value="x">No — lo guardo solo</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn-scan" id="btn-main-scan" onclick="evaluar()">▸ INICIAR ESCANEO NEURAL</button>
+  
+  <button id="btn-reset-flow" onclick="reiniciarFlujoNuevoPaciente()">🔄 EVALUAR NUEVO PACIENTE</button>
+
+  <div id="res" class="result"></div>
+
+  <div id="reg-panel" class="region-panel">
+    <div id="reg-title" class="region-title">Corteza Cerebral</div>
+    <div id="reg-desc" class="region-desc">Haga clic en una región 3D para examinar.</div>
+  </div>
+
+  <div class="osc-block">
+    <div class="osc-header">
+      <div>📡 Telemetría de Impulsos Kinéticos</div>
+      <div id="osc-status" style="color:var(--c1)">REF-0.9Hz</div>
+    </div>
+    <div class="osc-wave-wrap">
+      <canvas id="cecg"></canvas>
+    </div>
+  </div>
+
+  <div id="metrics" class="metrics">
+    <div class="metric"><div class="m-val" id="mv1">--</div><div class="m-lbl">Cortisol</div></div>
+    <div class="metric"><div class="m-val" id="mv2">--</div><div class="m-lbl">HRV</div></div>
+    <div class="metric"><div class="m-val" id="mv3">--</div><div class="m-lbl">Estado</div></div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="legend">
+    <div class="legend-title">Mapa de señales</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#00e5ff;box-shadow:0 0 6px #00e5ff;"></div>Corteza Cerebral (Puntos)</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#00e5ff;height:2px;border-radius:0;"></div>Nervios Periféricos Orgánicos</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#ff2244;box-shadow:0 0 6px #ff2244;"></div>Nodos de Sobrecarga Simpática</div>
+  </div>
+
+  <div class="footer">IE "Comunidad Segura" · Salud Mental 2026</div>
+</div>
+
+<div class="canvas-wrap">
+  <div class="layer-hud">
+    <button id="btn-layer-all" class="layer-btn active" onclick="cambiarCapaVista('all')">Completo</button>
+    <button id="btn-layer-nerves" class="layer-btn" onclick="cambiarCapaVista('nerves')">Sólo Nervios</button>
+    <button id="btn-layer-body" class="layer-btn" onclick="cambiarCapaVista('body')">Silueta 3D</button>
+  </div>
+
+  <button id="btnBack" class="btn-back" onclick="resetearVistaCamara()">◂ VOLVER A VISTA GENERAL</button>
+  <div class="scanline"></div>
+  <div class="bracket br-tl"></div>
+  <div class="bracket br-tr"></div>
+  <div class="bracket br-bl"></div>
+  <div class="bracket br-br"></div>
+  <div class="canvas-label cl-top">SISTEMA NERVIOSO CENTRAL Y PERIFÉRICO HOLOGRÁFICO</div>
+  <div class="canvas-label cl-bot">HAZ CLIC EN UNA REGIÓN DEL CUERPO PARA DETALLE</div>
+  <canvas id="c3d"></canvas>
+</div>
+
+<script>
+// ===================================================
+//  INICIALIZACIÓN DE EMAILJS WITH PUBLIC KEY
+// ===================================================
+(function() {
+    emailjs.init("dxLS6KLTSnQThy4yl");
+})();
+
+let cacheUsuarioActivo = null;
+
+function registrarUsuarioTemporal() {
+  const nombre = document.getElementById('reg-name').value.trim();
+  const edad = document.getElementById('reg-age').value.trim();
+  const correo = document.getElementById('reg-email').value.trim();
+
+  if (!nombre || !edad || !correo) {
+    alert("Acceso denegado: Ingrese todas las credenciales de bio-identificación.");
+    return;
+  }
+
+  cacheUsuarioActivo = { nombre, edad, correo };
+
+  const overlay = document.getElementById('registration-overlay');
+  overlay.style.opacity = '0';
+  overlay.style.transform = 'scale(1.08)';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+  }, 600);
+}
+
+function inyectarEnTablaLocal(sTxt, rTxt, aTxt, diagnósticoFinal) {
+  if (!cacheUsuarioActivo) return;
+
+  let matrizPacientes = JSON.parse(localStorage.getItem('bd_neuroscan_data')) || [];
+
+  let nuevoRegistro = {
+    nombre: cacheUsuarioActivo.nombre,
+    edad: cacheUsuarioActivo.edad,
+    correo: cacheUsuarioActivo.correo,
+    sueno: sTxt,
+    reaccion: rTxt,
+    apoyo: aTxt,
+    diagnostico: diagnósticoFinal
+  };
+
+  matrizPacientes.push(nuevoRegistro);
+  localStorage.setItem('bd_neuroscan_data', JSON.stringify(matrizPacientes));
+}
+
+// ===================================================
+//  FUNCIÓN CLAVE: ENVÍO DEL CORREO CON PARÁMETROS EXACTOS
+// ===================================================
+function enviarCorreoRecomendacion(diagnostico, recomendaciones) {
+  if (!cacheUsuarioActivo) return;
+
+  const parametrosCorreo = {
+    to_name: cacheUsuarioActivo.nombre,
+    to_email: cacheUsuarioActivo.correo,
+    estado_neural: diagnostico,
+    recomendaciones_texto: recomendaciones
+  };
+
+  emailjs.send("service_xv6glhg", "template_ub59chz", parametrosCorreo)
+    .then(() => {
+      console.log("📬 Reporte de Bio-Monitoreo enviado con éxito al correo del estudiante.");
+    }, (error) => {
+      console.log("Intentando con plantilla alternativa por si acaso...");
+      emailjs.send("service_xv6glhg", "template_yidsk5o", parametrosCorreo)
+        .then(() => {
+          console.log("📬 Reporte enviado con éxito usando plantilla alternativa.");
+        }, (err2) => {
+          console.error("❌ Error definitivo al despachar el correo electrónico:", err2);
+        });
+    });
+}
+
+function abrirModalExcel() {
+  const modal = document.getElementById('excel-modal');
+  const tbody = document.getElementById('excel-rows-body');
+  tbody.innerHTML = '';
+
+  let matrizPacientes = JSON.parse(localStorage.getItem('bd_neuroscan_data')) || [];
+
+  if (matrizPacientes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#557799; font-style:italic;">No hay espectros de pacientes guardados en el almacenamiento del terminal.</td></tr>`;
+  } else {
+    matrizPacientes.forEach(p => {
+      let colorDiag = 'var(--green)';
+      if (p.diagnostico.includes('CRÍTICA') || p.diagnostico.includes('SOBRECARGA')) colorDiag = 'var(--red)';
+      if (p.diagnostico.includes('MODERADA') || p.diagnostico.includes('TENSIÓN')) colorDiag = 'var(--amber)';
+
+      tbody.innerHTML += `
+        <tr>
+          <td><strong>${p.nombre}</strong></td>
+          <td>${p.edad}</td>
+          <td>${p.correo}</td>
+          <td>${p.sueno}</td>
+          <td>${p.reaccion}</td>
+          <td>${p.apoyo}</td>
+          <td style="color:${colorDiag}; font-weight:bold;">${p.diagnostico}</td>
+        </tr>
+      `;
+    });
+  }
+  modal.style.display = 'flex';
+}
+
+function cerrarModalExcel() {
+  document.getElementById('excel-modal').style.display = 'none';
+}
+
+function descargarExcelXLSX() {
+  let matrizPacientes = JSON.parse(localStorage.getItem('bd_neuroscan_data')) || [];
+
+  if (matrizPacientes.length === 0) {
+    alert("Operación cancelada: No existen filas de datos consolidadas.");
+    return;
+  }
+
+  let estructuraExcel = matrizPacientes.map(p => ({
+    "Nombre del Evaluado": p.nombre,
+    "Edad": parseInt(p.edad),
+    "Correo Electrónico": p.correo,
+    "Horas de Sueño": p.sueno,
+    "Reacción ante Estrés": p.reaccion,
+    "Red de Apoyo Escolar": p.apoyo,
+    "Diagnóstico del Sistema Nervioso": p.diagnostico
+  }));
+
+  let hoja = XLSX.utils.json_to_sheet(estructuraExcel);
+  let libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, "Monitoreo_Neural");
+  XLSX.writeFile(libro, "Base_Pacientes.xlsx");
+}
+
+function limpiarTodaLaBaseDeDatos() {
+  if (confirm("¿Estás seguro de que deseas eliminar TODOS los pacientes guardados de la lista de Excel local?")) {
+    localStorage.removeItem('bd_neuroscan_data');
+    abrirModalExcel();
+  }
+}
+
+function reiniciarFlujoNuevoPaciente() {
+  document.getElementById('reg-name').value = '';
+  document.getElementById('reg-age').value = '';
+  document.getElementById('reg-email').value = '';
+  
+  document.getElementById('res').style.display = 'none';
+  document.getElementById('metrics').style.display = 'none';
+  document.getElementById('btn-reset-flow').style.display = 'none';
+  document.getElementById('btn-main-scan').style.display = 'block';
+
+  stressLvl = 0;
+  cNerve.set('#00e5ff');
+  pulseSpd = 1.8;
+  hotIntensity = 0.0;
+  oscColor = '#00e5ff';
+  oscSpeedFactor = 1.2;
+  document.getElementById('osc-status').textContent = 'REF-0.9Hz';
+  document.getElementById('osc-status').style.color = 'var(--c1)';
+  if(brainPoints) brainPoints.material.color.set('#00e5ff');
+  if(bodyMesh) {
+    bodyMesh.traverse(m => { if(m.isMesh) { m.material.color.set('#00aaff'); } });
+  }
+  cambiarCapaVista('all');
+  resetearVistaCamara();
+
+  cacheUsuarioActivo = null;
+  const overlay = document.getElementById('registration-overlay');
+  overlay.style.display = 'flex';
+  overlay.style.opacity = '1';
+  overlay.style.transform = 'scale(1)';
+}
+
+// ===================================================
+//  CONFIGURACIÓN DE THREE.JS BASE
+// ===================================================
+const canvas = document.getElementById('c3d');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x020c16, 0.05);
+
+const W = () => canvas.clientWidth;
+const H = () => canvas.clientHeight;
+const camera = new THREE.PerspectiveCamera(38, W()/H(), 0.1, 100);
+
+const camTargetPos = new THREE.Vector3(0, 0, 4.0);
+const camCurrentPos = new THREE.Vector3(0, 0, 4.0);
+const lookTarget = new THREE.Vector3(0, 0, 0);
+const lookCurrent = new THREE.Vector3(0, 0, 0);
+
+camera.position.copy(camCurrentPos);
+
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setSize(W(), H());
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+const masterGroup = new THREE.Group();
+scene.add(masterGroup);
+
+let cNerve = new THREE.Color('#00e5ff');
+let cHot = new THREE.Color('#ff2244');
+let pulseSpd = 1.8;
+let hotIntensity = 0.0;
+let stressLvl = 0;
+let bodyMesh = null;
+let nerveLines = null;
+let brainPoints = null;
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const objetosInteractivos = [];
+let regionSeleccionada = false;
+
+const canvasOsc = document.getElementById('cecg');
+const ctxOsc = canvasOsc.getContext('2d');
+let xOsc = 0; 
+let oscColor = '#00e5ff';
+let oscSpeedFactor = 1.5;
+
+function resizeOscilloscope() {
+  canvasOsc.width = canvasOsc.parentElement.clientWidth;
+  canvasOsc.height = canvasOsc.parentElement.clientHeight;
+  ctxOsc.fillStyle = '#01060d';
+  ctxOsc.fillRect(0, 0, canvasOsc.width, canvasOsc.height);
+}
+window.addEventListener('resize', resizeOscilloscope);
+resizeOscilloscope();
+
+// ===================================================
+//  CARGADOR DEL MODELO .OBJ
+// ===================================================
+const loader = new THREE.OBJLoader();
+
+loader.load('FinalBaseMesh.obj', function (obj) {
+  const holoMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00aaff, wireframe: true, transparent: true, opacity: 0.04, blending: THREE.AdditiveBlending
+  });
+  obj.traverse(function (child) {
+    if (child.isMesh) {
+      child.geometry.center(); child.material = holoMaterial;
+    }
+  });
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = box.getSize(new THREE.Vector3());
+  const targetHeight = 2.8; const scaleFactor = targetHeight / size.y;
+  obj.scale.set(scaleFactor, scaleFactor, scaleFactor);
+  obj.position.set(-0.05, -0.1, 0);
+  bodyMesh = obj; masterGroup.add(bodyMesh);
+
+  generarCerebroPuntitos();
+  generarNerviosCurvosOrganicos();
+  crearZonasDeColisionInvisibles(); // <--- ERROR CORREGIDO (Quitado el espacio que rompa el script)
+
+  document.getElementById('model-status').textContent = 'SISTEMA EN LÍNEA';
+  document.getElementById('model-status').style.color = 'var(--green)';
+}, 
+(xhr) => {},
+(error) => { 
+  document.getElementById('model-status').textContent = 'ERROR BASE';
+  document.getElementById('model-status').style.color = 'var(--red)';
+});
+
+function generarCerebroPuntitos() {
+  const geo = new THREE.BufferGeometry(); const numPuntos = 550; const pos = new Float32Array(numPuntos * 3);
+  const centroCerebro = new THREE.Vector3(-0.05, 1.15, 0.02);
+  for(let i=0; i<numPuntos; i++) {
+    const u = Math.random(); const v = Math.random(); const theta = u * 2.0 * Math.PI; const phi = Math.acos(2.0 * v - 1.0);
+    const rX = 0.095 * (0.8 + Math.random()*0.2); const rY = 0.12 * (0.8 + Math.random()*0.2); const rZ = 0.10 * (0.8 + Math.random()*0.2);
+    pos[i*3] = centroCerebro.x + rX * Math.sin(phi) * Math.cos(theta); pos[i*3+1] = centroCerebro.y + rY * Math.sin(phi) * Math.sin(theta); pos[i*3+2] = centroCerebro.z + rZ * Math.cos(phi);
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const pMat = new THREE.PointsMaterial({ color: cNerve, size: 0.022, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+  brainPoints = new THREE.Points(geo, pMat); masterGroup.add(brainPoints);
+}
+
+function generarNerviosCurvosOrganicos() {
+  const segmentosPuntos = []; const centroX = -0.05;
+  for (let y = -0.5; y <= 0.95; y += 0.015) {
+    let desviacionX = Math.sin(y * 20) * 0.003; segmentosPuntos.push(new THREE.Vector3(centroX + desviacionX, y, 0.02), new THREE.Vector3(centroX + desviacionX, y + 0.015, 0.02));
+  }
+  for (let yCentral = -0.4; yCentral <= 0.8; yCentral += 0.04) {
+    let anchoCuerpo = 0.28 * Math.cos((yCentral - 0.2) * 1.2);
+    for (let lado of [-1, 1]) {
+      let pasos = 16; let ant = new THREE.Vector3(centroX, yCentral, 0.02);
+      for(let i = 1; i <= pasos; i++) {
+        let pct = i / pasos; let x = centroX + (lado * anchoCuerpo * Math.sin(pct * Math.PI * 0.5)); let y = yCentral - (pct * pct * 0.05) + (Math.sin(pct * 10) * 0.006); let z = 0.08 * Math.sin(pct * Math.PI) * (1 - pct);
+        let nvo = new THREE.Vector3(x, y, z); segmentosPuntos.push(ant.clone(), nvo.clone()); ant.copy(nvo);
+      }
+    }
+  }
+  for (let lado of [-1, 1]) {
+    let nodosBrazo = [new THREE.Vector3(centroX + (lado * 0.04), 0.78, 0.02), new THREE.Vector3(centroX + (lado * 0.18), 0.70, 0.04), new THREE.Vector3(centroX + (lado * 0.38), 0.48, 0.01), new THREE.Vector3(centroX + (lado * 0.54), 0.22, -0.02), new THREE.Vector3(centroX + (lado * 0.62), 0.05, -0.04)];
+    crearSubDivisionOrganica(nodosBrazo, segmentosPuntos, 4, lado, false, centroX);
+  }
+  for (let lado of [-1, 1]) {
+    let nodosPierna = [new THREE.Vector3(centroX + (lado * 0.05), -0.42, 0.02), new THREE.Vector3(centroX + (lado * 0.15), -0.58, 0.03), new THREE.Vector3(centroX + (lado * 0.22), -0.92, 0.01), new THREE.Vector3(centroX + (lado * 0.19), -1.32, -0.02), new THREE.Vector3(centroX + (lado * 0.16), -1.58, -0.05)];
+    crearSubDivisionOrganica(nodosPierna, segmentosPuntos, 4, lado, true, centroX);
+  }
+  const totalCoors = segmentosPuntos.length; const lGeo = new THREE.BufferGeometry(); const lPos = new Float32Array(totalCoors * 3); const lCol = new Float32Array(totalCoors * 3);
+  for (let i = 0; i < totalCoors; i++) {
+    lPos[i*3] = segmentosPuntos[i].x; lPos[i*3+1] = segmentosPuntos[i].y; lPos[i*3+2] = segmentosPuntos[i].z;
+    lCol[i*3] = cNerve.r; lCol[i*3+1] = cNerve.g; lCol[i*3+2] = cNerve.b;
+  }
+  lGeo.setAttribute('position', new THREE.BufferAttribute(lPos, 3)); lGeo.setAttribute('color', new THREE.BufferAttribute(lCol, 3));
+  const lMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, linewidth: 1.5 });
+  if(nerveLines) masterGroup.remove(nerveLines);
+  nerveLines = new THREE.LineSegments(lGeo, lMat); masterGroup.add(nerveLines);
+  crearZonasTension(centroX);
+}
+
+function crearSubDivisionOrganica(nodos, listaSalida, viasAlternas, lado, esPierna, centroX) {
+  for (let v = 0; v < viasAlternas; v++) {
+    let factorVariacion = v * 0.015; let ant = nodos[0].clone();
+    for (let i = 0; i < nodos.length - 1; i++) {
+      let pInicial = nodos[i]; let pFinal = nodos[i+1]; let subPasos = 20;
+      for (let j = 1; j <= subPasos; j++) {
+        let pct = j / subPasos; let nvo = new THREE.Vector3().lerpVectors(pInicial, pFinal, pct); let amplitudOnda = esPierna ? 0.007 : 0.009;
+        if (i < nodos.length - 2 || pct < 0.75) {
+          nvo.x += Math.sin(pct * 14 + v * 2) * amplitudOnda * (1 - pct * 0.5); nvo.y += Math.cos(pct * 10 + v) * 0.005 * (1 - pct * 0.5); nvo.z += Math.sin(pct * 8 + v) * 0.006 * (1 - pct * 0.5);
+        }
+        if(v > 0) {
+          let desplaze = (v % 2 === 0 ? 1 : -1) * factorVariacion * Math.sin(pct * Math.PI); nvo.x += desplaze; nvo.z += (v % 3 === 0 ? 0.01 : -0.01) * Math.sin(pct * Math.PI);
+        }
+        listaSalida.push(ant.clone(), nvo.clone()); ant.copy(nvo);
+      }
+    }
+  }
+}
+
+function crearZonasDeColisionInvisibles() {
+  const materialInvis = new THREE.MeshBasicMaterial({ visible: false }); const centroX = -0.05;
+  const meshCabeza = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.4, 0.35), materialInvis); meshCabeza.position.set(centroX, 1.15, 0); meshCabeza.userData = { nombreRegion: 'cabeza' }; masterGroup.add(meshCabeza); objetosInteractivos.push(meshCabeza);
+  const meshTorso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.7, 0.4), materialInvis); meshTorso.position.set(centroX, 0.5, 0); meshTorso.userData = { nombreRegion: 'torso' }; masterGroup.add(meshTorso); objetosInteractivos.push(meshTorso);
+  const meshPiernas = new THREE.Mesh(new THREE.BoxGeometry(0.65, 1.1, 0.4), materialInvis); meshPiernas.position.set(centroX, -0.9, 0); meshPiernas.userData = { nombreRegion: 'piernas' }; masterGroup.add(meshPiernas); objetosInteractivos.push(meshPiernas);
+}
+
+let hotMeshes = [], hotRings = [];
+function crearZonasTension(centroX) {
+  hotMeshes.forEach(m => masterGroup.remove(m)); hotRings.forEach(r => masterGroup.remove(r));
+  hotMeshes = []; hotRings = [];
+  const puntosCalor = [[centroX, 1.15, 0.02], [centroX, 0.8, 0.02], [centroX, 0.38, 0.04], [centroX, -0.12, 0.03], [centroX - 0.22, 0.65, 0.01], [centroX + 0.22, 0.65, 0.01]];
+  puntosCalor.forEach(([x, y, z]) => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), new THREE.MeshBasicMaterial({ color: 0xff2244, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); mesh.position.set(x, y, z); masterGroup.add(mesh); hotMeshes.push(mesh);
+    const rm = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(new THREE.EllipseCurve(0, 0, 0.09, 0.09).getPoints(24).map(p => new THREE.Vector3(p.x, p.y, 0))), new THREE.LineBasicMaterial({color: 0xff2244, transparent: true, opacity: 0})); rm.position.set(x, y, z); masterGroup.add(rm); hotRings.push(rm);
+  });
+}
+
+let capaActivaGlobal = 'all';
+function cambiarCapaVista(tipoCapa) {
+  capaActivaGlobal = tipoCapa; document.querySelectorAll('.layer-btn').forEach(btn => btn.classList.remove('active'));
+  if(tipoCapa === 'all') {
+    document.getElementById('btn-layer-all').classList.add('active'); if(bodyMesh) bodyMesh.visible = true; if(nerveLines) nerveLines.visible = true; if(brainPoints) brainPoints.visible = true;
+    ajustarOpacidadMallaCuerpo(stressLvl === 2 ? 0.12 : (stressLvl === 1 ? 0.08 : 0.04));
+  } else if(tipoCapa === 'nerves') {
+    document.getElementById('btn-layer-nerves').classList.add('active'); if(bodyMesh) bodyMesh.visible = false; if(nerveLines) nerveLines.visible = true; if(brainPoints) brainPoints.visible = true;
+  } else if(tipoCapa === 'body') {
+    document.getElementById('btn-layer-body').classList.add('active'); if(bodyMesh) bodyMesh.visible = true; if(nerveLines) nerveLines.visible = false; if(brainPoints) brainPoints.visible = false; ajustarOpacidadMallaCuerpo(0.18);
+  }
+}
+function ajustarOpacidadMallaCuerpo(nuevaOpacidad) {
+  if(!bodyMesh) return; bodyMesh.traverse(child => { if(child.isMesh) child.material.opacity = nuevaOpacidad; });
+}
+
+let drag = false, px = 0, py = 0, rotY = 0, rotX = 0, tRotY = 0, tRotX = 0, autoRot = true;
+canvas.addEventListener('mousedown', e => { drag = true; autoRot = false; px = e.clientX; py = e.clientY; });
+window.addEventListener('mouseup', e => { if (drag && Math.abs(e.clientX - px) < 3 && Math.abs(e.clientY - py) < 3) procesarClickRaycast(e); drag = false; });
+window.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect(); mouse.x = ((e.clientX - rect.left) / canvas.clientWidth) * 2 - 1; mouse.y = -((e.clientY - rect.top) / canvas.clientHeight) * 2 + 1;
+  if (!bodyMesh || capaActivaGlobal === 'body') return; raycaster.setFromCamera(mouse, camera); canvas.style.cursor = raycaster.intersectObjects(objetosInteractivos).length > 0 ? 'pointer' : 'default';
+  if (!drag) return; tRotY += (e.clientX - px) * 0.008; px = e.clientX; tRotX += (e.clientY - py) * 0.004; py = e.clientY; tRotX = Math.max(-0.5, Math.min(0.5, tRotX));
+});
+
+function procesarClickRaycast(e) {
+  if (!bodyMesh || capaActivaGlobal === 'body') return; raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(objetosInteractivos);
+  if (intersects.length > 0) activarDiagnosticoRegional(intersects[0].object.userData.nombreRegion);
+}
+
+function ganarOpacidadCuerpo(alfa) { ajustarOpacidadMallaCuerpo(alfa); }
+
+function activarDiagnosticoRegional(nombreReg) {
+  regionSeleccionada = true; autoRot = false; tRotY = 0; tRotX = 0; const centroX = -0.05;
+  const panel = document.getElementById('reg-panel'); const title = document.getElementById('reg-title'); const desc = document.getElementById('reg-desc');
+  document.getElementById('btnBack').style.display = 'block'; panel.style.display = 'block';
+  if (nombreReg === 'cabeza') {
+    camTargetPos.set(centroX, 1.15, 1.4); lookTarget.set(centroX, 1.15, 0); title.textContent = '🔍 Análisis: Corteza Cerebral';
+    desc.textContent = document.getElementById('sueno').value === 'x' ? 'Alerta: Actividad electroencefalográfica alterada por privación crítica de sueño. Ondas delta disminuidas.' : (document.getElementById('sueno').value === 'm' ? 'Estado: Fatiga leve detectada en el lóbulo frontal. Capacidad cognitiva normal con desgaste.' : 'Estado: Patrón de ondas cerebrales estable. Regeneración celular nocturna completada de forma óptima.');
+  } else if (nombreReg === 'torso') {
+    camTargetPos.set(centroX, 0.4, 1.6); lookTarget.set(centroX, 0.4, 0); title.textContent = '🔍 Análisis: Sistema Cardiovascular';
+    desc.textContent = document.getElementById('reac').value === 'x' ? 'Alerta Simpática: Se detecta somatización gástrica e inestabilidad del ritmo cardíaco bajo tensión.' : (document.getElementById('reac').value === 'm' ? 'Estado: Taquicardia reactiva transitoria. El cuerpo recupera la homeostasis de forma moderada.' : 'Homeostasis: Equilibrio del nervio vago óptimo. Sincronización cardíaca y respiratoria en perfecto estado.');
+  } else if (nombreReg === 'piernas') {
+    camTargetPos.set(centroX, -0.9, 1.8); lookTarget.set(centroX, -0.9, 0); title.textContent = '🔍 Análisis: Extremidades Inferiores';
+    desc.textContent = document.getElementById('apoyo').value === 'x' ? 'Aviso: Tensión muscular refleja acumulada en el tren inferior. Respuesta de huida inhibida por estrés sostenido.' : 'Estado: Nervios ciáticos y femorales estables. Conductividad eléctrica periférica dentro de los rangos normales.';
+  }
+}
+function resetearVistaCamara() { regionSeleccionada = false; autoRot = true; camTargetPos.set(0, 0, 4.0); lookTarget.set(0, 0, 0); document.getElementById('btnBack').style.display = 'none'; document.getElementById('reg-panel').style.display = 'none'; }
+
+function actualizarOsciloscopio() {
+  const w = canvasOsc.width; const h = canvasOsc.height; const midY = h / 2; ctxOsc.fillStyle = 'rgba(1, 6, 13, 0.12)'; ctxOsc.fillRect(xOsc, 0, 6, h); ctxOsc.fillStyle = '#01060d'; ctxOsc.fillRect(xOsc + 6, 0, 8, h);
+  let y = midY; let tOnda = performance.now() * 0.004 * oscSpeedFactor;
+  if (stressLvl === 0) y += Math.sin(xOsc * 0.06) * Math.cos(tOnda) * 12;
+  else if (stressLvl === 1) y += Math.sin(xOsc * 0.12 + tOnda) * 10 + (Math.random() - 0.5) * 3;
+  else if (stressLvl === 2) { let moduloPico = (xOsc + Math.floor(tOnda * 15)) % 45; y += moduloPico < 5 ? -22 : (moduloPico >= 5 && moduloPico < 8 ? 14 : (Math.random() - 0.5) * 5); }
+  ctxOsc.fillStyle = oscColor; ctxOsc.fillRect(xOsc, y, 2.5, 2.5); xOsc += oscSpeedFactor; if (xOsc >= w) xOsc = 0;
+}
+
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate); const t = clock.getElapsedTime(); actualizarOsciloscopio();
+  camCurrentPos.lerp(camTargetPos, 0.08); lookCurrent.lerp(lookTarget, 0.08); camera.position.copy(camCurrentPos); camera.lookAt(lookCurrent);
+  if (autoRot) tRotY = t * 0.14; rotY += (tRotY - rotY) * 0.05; rotX += (tRotX - rotX) * 0.05;
+  if(!regionSeleccionada || !autoRot) { masterGroup.rotation.y = rotY; masterGroup.rotation.x = rotX; }
+  if(brainPoints) brainPoints.material.size = 0.020 + Math.sin(t * 3.5) * 0.003;
+  if (nerveLines) {
+    const geo = nerveLines.geometry; const ca = geo.attributes.color.array; const pa = geo.attributes.position.array; const totalP = ca.length / 3;
+    for (let i = 0; i < totalP; i++) {
+      const yPos = pa[i*3+1]; const xPos = pa[i*3]; const wave = Math.sin((yPos * 5.0) + (Math.abs(xPos + 0.05) * 3.0) - t * pulseSpd);
+      let r = cNerve.r, g = cNerve.g, b = cNerve.b;
+      if (stressLvl === 2 && yPos > -0.3) { const fC = 0.3 + 0.7 * ((wave + 1) / 2); r = cNerve.r * (1 - fC) + cHot.r * fC; g = cNerve.g * (1 - fC) + cHot.g * fC; }
+      let fA = yPos < -1.2 ? Math.max(0.0, (yPos - (-1.44)) / 0.24) : 1.0;
+      if (wave > 0.68) { ca[i*3] = Math.min(r * 2.8, 1) * fA; ca[i*3+1] = Math.min(g * 2.8, 1) * fA; ca[i*3+2] = Math.min(b * 2.8, 1) * fA; }
+      else { ca[i*3] = r * 0.35 * fA; ca[i*3+1] = g * 0.35 * fA; ca[i*3+2] = b * 0.35 * fA; }
+    }
+    geo.attributes.color.needsUpdate = true;
+  }
+  hotMeshes.forEach((m, idx) => { const ph = t * (pulseSpd * 0.8) + idx * 1.5; const pulse = (Math.sin(ph) * 0.5 + 0.5); m.material.opacity = hotIntensity * pulse * 0.8; m.scale.setScalar(1 + pulse * 0.25 * hotIntensity); });
+  hotRings.forEach((ring, idx) => { const ph = t * (pulseSpd * 0.6) + idx * 1.5; const pulse = (Math.sin(ph) * 0.5 + 0.5); ring.material.opacity = hotIntensity * (1 - pulse) * 0.5; ring.scale.setScalar(1 + pulse * 1.1 * hotIntensity); ring.rotation.z = t * 0.12; });
+  renderer.render(scene, camera);
+}
+animate();
+
+function setMetric(id, val, color){ const el = document.getElementById(id); el.textContent = val; el.style.color = color; }
+
+// ===================================================
+//  CONTROLADORES HUD GENERAL Y EVALUACIÓN
+// ===================================================
+function evaluar(){
+  const s=document.getElementById('sueno').value;
+  const r=document.getElementById('reac').value;
+  const a=document.getElementById('apoyo').value;
+  const res=document.getElementById('res');
+  const met=document.getElementById('metrics');
+  const statOsc = document.getElementById('osc-status');
+
+  let malas=[s,r,a].filter(v=>v==='x').length;
+  let meds =[s,r,a].filter(v=>v==='m').length;
+
+  res.style.display='block'; met.style.display='flex';
+  resetearVistaCamara();
+
+  document.getElementById('btn-main-scan').style.display = 'none';
+  document.getElementById('btn-reset-flow').style.display = 'block';
+
+  const sTxt = document.getElementById('sueno').options[document.getElementById('sueno').selectedIndex].text;
+  const rTxt = document.getElementById('reac').options[document.getElementById('reac').selectedIndex].text;
+  const aTxt = document.getElementById('apoyo').options[document.getElementById('apoyo').selectedIndex].text;
+  
+  let diagnósticoTexto = "";
+  let recomendacionesTexto = "";
+  let claseResultado = "";
+
+  if(malas >= 2){
+    stressLvl=2; cNerve.set('#ff2244'); pulseSpd=4.8; hotIntensity=1.0; oscColor = '#ff2244'; oscSpeedFactor = 2.8; statOsc.textContent = 'ERR-4.2Hz [CRIT]'; statOsc.style.color = 'var(--red)';
+    if(brainPoints) brainPoints.material.color.set('#ff2244');
+    if(bodyMesh) { bodyMesh.traverse(m => { if(m.isMesh) { m.material.color.set('#ff2244'); } }); ganarOpacidadCuerpo(capaActivaGlobal === 'body' ? 0.18 : 0.12); }
+    
+    claseResultado = 'result r-bad';
+    diagnósticoTexto = "SOBRECARGA CRÍTICA (Estrés Severo)";
+    recomendacionesTexto = "Se ha detectado una sobrecarga crítica en tu bio-monitor. Te recomendamos de forma urgente acudir al departamento de psicología, conversar con un tutor o adulto de tu entera confianza y priorizar ejercicios de respiración guiada. No pases por esto a solas.";
+    setMetric('mv1','ALTO','#ff6688'); setMetric('mv2','BAJO','#ff6688'); setMetric('mv3','CRÍTICO','#ff6688');
+  
+  } else if(malas===1 || meds>=2){
+    stressLvl=1; cNerve.set('#ff9900'); pulseSpd=2.8; hotIntensity=0.5; oscColor = '#ff9900'; oscSpeedFactor = 1.8; statOsc.textContent = 'WARN-1.9Hz'; statOsc.style.color = 'var(--amber)';
+    if(brainPoints) brainPoints.material.color.set('#ff9900');
+    if(bodyMesh) { bodyMesh.traverse(m => { if(m.isMesh) { m.material.color.set('#ff9900'); } }); ganarOpacidadCuerpo(capaActivaGlobal === 'body' ? 0.18 : 0.08); }
+    
+    claseResultado = 'result r-mid';
+    diagnósticoTexto = "TENSIÓN MODERADA (Fatiga Acumulada)";
+    recomendacionesTexto = "Tu sistema registra fatiga adaptativa. Te sugerimos regular tus horas de descanso (intenta dormir al menos 8 horas seguidas), establecer pausas activas digitales y conversar abiertamente sobre cualquier inquietud con tus amigos o familiares.";
+    setMetric('mv1','MEDIO','#ffc040'); setMetric('mv2','MEDIO','#ffc040'); setMetric('mv3','ATENTO','#ffc040');
+  
+  } else {
+    stressLvl=0; cNerve.set('#00e5ff'); pulseSpd=1.8; hotIntensity=0.0; oscColor = '#00e5ff'; oscSpeedFactor = 1.2; statOsc.textContent = 'REF-0.9Hz [OK]'; statOsc.style.color = 'var(--c1)';
+    if(brainPoints) brainPoints.material.color.set('#00e5ff');
+    if(bodyMesh) { bodyMesh.traverse(m => { if(m.isMesh) { m.material.color.set('#00aaff'); } }); ganarOpacidadCuerpo(capaActivaGlobal === 'body' ? 0.18 : 0.04); }
+    
+    claseResultado = 'result r-ok';
+    diagnósticoTexto = "EQUILIBRIO PARASIMPÁTICO (Homeostasis)";
+    recomendacionesTexto = "¡Felicidades! Tus indicadores biológicos reflejan un excelente balance y óptima salud mental. Sigue cultivando buenos hábitos de sueño y mantén activa tu red de comunicación saludable en el colegio.";
+    setMetric('mv1','BAJO','#00ff88'); setMetric('mv2','ALTO','#00ff88'); setMetric('mv3','ÓPTIMO','#00ff88');
+  }
+
+  const nombreEstudiante = cacheUsuarioActivo ? cacheUsuarioActivo.nombre : "Estudiante";
+
+  // INYECTAR EL TEXTO COMPLETO CYBERPUNK EN EL PANEL LATERAL
+  res.className = claseResultado;
+  res.innerHTML = `
+    <div style="font-family:'Orbitron', sans-serif; font-size:11px; letter-spacing:1px; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
+      🧬 SISTEMA DE BIO-MONITOREO NEURAL v8.5<br>
+      <span style="font-size:9px; opacity:0.6;">IE "Comunidad Segura"</span>
+    </div>
+    <p style="margin-bottom:8px;">Hola, <strong>${nombreEstudiante}</strong>.</p>
+    <p style="margin-bottom:10px; font-size:12px; opacity:0.85; line-height:1.4;">El escaneo tridimensional de tu sistema nervioso central y periférico ha concluido con éxito. A continuación, te presentamos el diagnóstico de telemetría procesado por nuestra red de alta densidad:</p>
+    
+    <div style="margin-bottom:10px;">
+      <span style="display:block; font-size:10px; font-weight:bold; letter-spacing:1px; opacity:0.6;">📊 ESTADO GENERAL RELEVADO:</span>
+      <span style="font-size:13px; font-weight:700;">${diagnósticoTexto}</span>
+    </div>
+    
+    <div style="margin-bottom:12px; font-size:12px; line-height:1.4; opacity:0.9;">
+      <span style="display:block; font-size:10px; font-weight:bold; letter-spacing:1px; opacity:0.6; margin-bottom:2px;">💡 RECOMENDACIONES CIENTÍFICAS:</span>
+      ${recomendacionesTexto}
+    </div>
+    
+    <div style="font-size:9px; opacity:0.4; line-height:1.3; border-top:1px dashed rgba(255,255,255,0.1); padding-top:6px; font-family:sans-serif;">
+      Este es un reporte automático generado con fines educativos para el proyecto de indagación científica sobre la Salud Mental y el Acoso Escolar 2026. Si necesitas conversar con alguien, recuerda que la red de apoyo de la escuela siempre estará disponible de forma confidencial.
+    </div>
+  `;
+
+  // Guardar datos en la base local simulada de Excel
+  inyectarEnTablaLocal(sTxt, rTxt, aTxt, diagnósticoTexto);
+  
+  // Despachar reporte automático al correo del estudiante mediante EmailJS
+  enviarCorreoRecomendacion(diagnósticoTexto, recomendacionesTexto);
+}
+
+window.addEventListener('resize',()=>{ camera.aspect = W()/H(); camera.updateProjectionMatrix(); renderer.setSize(W(),H()); });
+</script>
+</body>
+</html>
